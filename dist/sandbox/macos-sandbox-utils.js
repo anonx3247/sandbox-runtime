@@ -274,14 +274,14 @@ function generateSandboxProfile({ readConfig, writeConfig, httpProxyPort, socksP
         '  (global-name "com.apple.bsd.dirhelper")',
         '  (global-name "com.apple.securityd.xpc")',
         '  (global-name "com.apple.coreservices.launchservicesd")',
+        // Required for TLS certificate verification in Go binaries (gh, terraform,
+        // etc.). Without it, Go's Security framework calls return OSStatus -26276
+        // for any HTTPS connection. curl uses SecureTransport directly and doesn't
+        // hit this path, which is why curl works while Go TLS fails without it.
+        '  (global-name "com.apple.trustd.agent")',
         ')',
         '',
-        ...(enableWeakerNetworkIsolation
-            ? [
-                '; trustd.agent - needed for Go TLS certificate verification (weaker network isolation)',
-                '(allow mach-lookup (global-name "com.apple.trustd.agent"))',
-            ]
-            : []),
+        ...(enableWeakerNetworkIsolation ? [] : []),
         ...(allowMachLookup && allowMachLookup.length > 0
             ? [
                 '; User-specified XPC/Mach services',
