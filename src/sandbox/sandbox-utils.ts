@@ -21,6 +21,15 @@ export const DANGEROUS_FILES = [
 ] as const
 
 /**
+ * Subset of DANGEROUS_FILES that the `allowGitConfig` setting ungates.
+ * Kept here so the Linux and macOS code paths agree on the carve-out.
+ */
+const GIT_CONFIG_DANGEROUS_FILES = new Set<string>([
+  '.gitconfig',
+  '.gitmodules',
+])
+
+/**
  * Dangerous directories that should be protected from writes.
  * These directories contain sensitive configuration or executable files.
  */
@@ -37,6 +46,18 @@ export function getDangerousDirectories(): string[] {
     '.claude/commands',
     '.claude/agents',
   ]
+}
+
+/**
+ * Get the list of dangerous filenames to deny writes to.
+ * When `allowGitConfig` is true, `.gitconfig` and `.gitmodules` are excluded
+ * so callers can run `git submodule add`, `git config`, etc.
+ */
+export function getDangerousFiles(allowGitConfig = false): readonly string[] {
+  if (!allowGitConfig) {
+    return DANGEROUS_FILES
+  }
+  return DANGEROUS_FILES.filter(f => !GIT_CONFIG_DANGEROUS_FILES.has(f))
 }
 
 /**

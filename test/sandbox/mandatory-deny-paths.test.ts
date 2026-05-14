@@ -464,6 +464,74 @@ describe.if(isSupportedPlatform)(
           ORIGINAL_CONTENT,
         )
       })
+
+      it('blocks writes to .gitmodules when allowGitConfig is false (default)', async () => {
+        writeFileSync('.gitmodules', ORIGINAL_CONTENT)
+
+        const result = await runSandboxedWriteWithGitConfig(
+          '.gitmodules',
+          MODIFIED_CONTENT,
+          false,
+        )
+
+        expect(result.success).toBe(false)
+        expect(readFileSync('.gitmodules', 'utf8')).toBe(ORIGINAL_CONTENT)
+      })
+
+      it('allows writes to .gitmodules when allowGitConfig is true', async () => {
+        writeFileSync('.gitmodules', ORIGINAL_CONTENT)
+
+        const result = await runSandboxedWriteWithGitConfig(
+          '.gitmodules',
+          MODIFIED_CONTENT,
+          true,
+        )
+
+        expect(result.success).toBe(true)
+        expect(readFileSync('.gitmodules', 'utf8').trim()).toBe(
+          MODIFIED_CONTENT,
+        )
+      })
+
+      it('blocks writes to .gitconfig when allowGitConfig is false (default)', async () => {
+        writeFileSync('.gitconfig', ORIGINAL_CONTENT)
+
+        const result = await runSandboxedWriteWithGitConfig(
+          '.gitconfig',
+          MODIFIED_CONTENT,
+          false,
+        )
+
+        expect(result.success).toBe(false)
+        expect(readFileSync('.gitconfig', 'utf8')).toBe(ORIGINAL_CONTENT)
+      })
+
+      it('allows writes to .gitconfig when allowGitConfig is true', async () => {
+        writeFileSync('.gitconfig', ORIGINAL_CONTENT)
+
+        const result = await runSandboxedWriteWithGitConfig(
+          '.gitconfig',
+          MODIFIED_CONTENT,
+          true,
+        )
+
+        expect(result.success).toBe(true)
+        expect(readFileSync('.gitconfig', 'utf8').trim()).toBe(MODIFIED_CONTENT)
+      })
+
+      it('still blocks writes to other dangerous dotfiles when allowGitConfig is true', async () => {
+        // .bashrc is unrelated to git and must remain protected.
+        writeFileSync('.bashrc', ORIGINAL_CONTENT)
+
+        const result = await runSandboxedWriteWithGitConfig(
+          '.bashrc',
+          MODIFIED_CONTENT,
+          true,
+        )
+
+        expect(result.success).toBe(false)
+        expect(readFileSync('.bashrc', 'utf8')).toBe(ORIGINAL_CONTENT)
+      })
     })
 
     describe.if(isLinux)(
@@ -1157,5 +1225,28 @@ describe('macGetMandatoryDenyPatterns - Unit Tests', () => {
       p => p.includes('.git/config') || p.endsWith('.git/config'),
     )
     expect(hasGitConfigPattern).toBe(true)
+  })
+
+  it('includes .gitconfig and .gitmodules when allowGitConfig is false', () => {
+    const patterns = macGetMandatoryDenyPatterns(false)
+
+    expect(patterns.some(p => p.endsWith('.gitconfig'))).toBe(true)
+    expect(patterns.some(p => p.endsWith('.gitmodules'))).toBe(true)
+  })
+
+  it('excludes .gitconfig and .gitmodules when allowGitConfig is true', () => {
+    const patterns = macGetMandatoryDenyPatterns(true)
+
+    expect(patterns.some(p => p.endsWith('.gitconfig'))).toBe(false)
+    expect(patterns.some(p => p.endsWith('.gitmodules'))).toBe(false)
+  })
+
+  it('still blocks unrelated dangerous dotfiles when allowGitConfig is true', () => {
+    const patterns = macGetMandatoryDenyPatterns(true)
+
+    // .bashrc, .zshrc, .mcp.json etc. must remain in the deny list.
+    expect(patterns.some(p => p.endsWith('.bashrc'))).toBe(true)
+    expect(patterns.some(p => p.endsWith('.zshrc'))).toBe(true)
+    expect(patterns.some(p => p.endsWith('.mcp.json'))).toBe(true)
   })
 })
