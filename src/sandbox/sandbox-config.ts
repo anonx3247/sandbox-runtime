@@ -198,7 +198,10 @@ export const FilesystemConfigSchema = z.object({
     .boolean()
     .optional()
     .describe(
-      'Allow writes to .git/config files (default: false). Enables git remote URL updates while keeping .git/hooks protected.',
+      'Allow writes to git config files (default: false). When enabled, ' +
+        'writes are permitted to .git/config, .gitconfig, and .gitmodules ' +
+        '(e.g. for git remote URL updates and `git submodule add`), while ' +
+        '.git/hooks remains protected.',
     ),
 })
 

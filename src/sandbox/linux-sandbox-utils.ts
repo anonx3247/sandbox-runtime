@@ -13,7 +13,7 @@ import {
   normalizePathForSandbox,
   normalizeCaseForComparison,
   isSymlinkOutsideBoundary,
-  DANGEROUS_FILES,
+  getDangerousFiles,
   getDangerousDirectories,
 } from './sandbox-utils.js'
 import type {
@@ -168,11 +168,14 @@ async function linuxGetMandatoryDenyPaths(
   const fallbackController = new AbortController()
   const signal = abortSignal ?? fallbackController.signal
   const dangerousDirectories = getDangerousDirectories()
+  // When allowGitConfig is true, drop .gitconfig and .gitmodules from the
+  // dangerous-file list (in addition to ungating .git/config below).
+  const dangerousFiles = getDangerousFiles(allowGitConfig)
 
   // Note: Settings files are added at the callsite in sandbox-manager.ts
   const denyPaths = [
     // Dangerous files in CWD
-    ...DANGEROUS_FILES.map(f => path.resolve(cwd, f)),
+    ...dangerousFiles.map(f => path.resolve(cwd, f)),
     // Dangerous directories in CWD
     ...dangerousDirectories.map(d => path.resolve(cwd, d)),
   ]
@@ -202,7 +205,7 @@ async function linuxGetMandatoryDenyPaths(
 
   // Build iglob args for all patterns in one ripgrep call
   const iglobArgs: string[] = []
-  for (const fileName of DANGEROUS_FILES) {
+  for (const fileName of dangerousFiles) {
     iglobArgs.push('--iglob', fileName)
   }
   for (const dirName of dangerousDirectories) {

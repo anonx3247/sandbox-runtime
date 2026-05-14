@@ -10,7 +10,7 @@ import {
   decodeSandboxedCommand,
   containsGlobChars,
   globToRegex,
-  DANGEROUS_FILES,
+  getDangerousFiles,
   getDangerousDirectories,
 } from './sandbox-utils.js'
 
@@ -46,8 +46,10 @@ export function macGetMandatoryDenyPatterns(allowGitConfig = false): string[] {
   const cwd = process.cwd()
   const denyPaths: string[] = []
 
-  // Dangerous files - static paths in CWD + glob patterns for subtree
-  for (const fileName of DANGEROUS_FILES) {
+  // Dangerous files - static paths in CWD + glob patterns for subtree.
+  // When allowGitConfig is true, .gitconfig and .gitmodules are dropped so
+  // callers can edit them (e.g. `git submodule add`, `git config`).
+  for (const fileName of getDangerousFiles(allowGitConfig)) {
     denyPaths.push(path.resolve(cwd, fileName))
     denyPaths.push(`**/${fileName}`)
   }
